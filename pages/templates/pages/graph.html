@@ -1,0 +1,73 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta http-equiv="X-UA-Compatible" content="IE=edge">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Graph</title>
+</head>
+<body>
+    <h1>Impact Analysis of Events to Revisions in Wikipedia Pages</h1>
+    {% block content %}
+    <label for="tagFilter">Filter by Tag</label>
+    <select id="tagFilter" onChange="updateChart()">
+        <option value="">Show all</option>
+        {% for tag in tags_data %}
+        <option value="{{tag}}">{{tag}}</option>
+        {% endfor %}
+    </select>
+    <div id="timeseriesChart"></div>
+    <script src="https://cdn.plot.ly/plotly-latest.min.js"></script>
+    <script>
+        let months = {{ months_data|safe }}
+        let revisions = {{ revisions_data|safe }}
+        let events = {{ events_data|safe }}
+
+        let data = []
+
+        for (let revision in revisions){
+            let trace = {
+                x: revisions[revision].x,
+                y: revisions[revision].y,
+                mode: 'line',
+                type: 'scatter',
+                name: revision,
+            }
+            data.push(trace)
+        }
+        let layout = {
+            title: "Time Series Chart of Wikipedia Revisions by Month",
+            xaxis: {title: "Date"},
+            yaxis: {title: "Number of Revisions"},
+            hovermode: 'closest'
+        }
+
+        function updateChart() {
+            let selectedTag = document.getElementById('tagFilter').value;
+            layout.shapes = [];
+
+            events.forEach((event) => {
+                if (selectedTag === "" || event.tags.includes(selectedTag)){
+                    layout.shapes.push({
+                        type: 'line',
+                        x0: event.month,
+                        x1: event.month,
+                        y0: 0.05,
+                        y1: 1,
+                        yref: 'paper',
+                        line: {
+                            color: 'red',
+                            width: 2
+                        }
+                    })
+                }
+            })
+            Plotly.newPlot('timeseriesChart', data, layout)
+        }
+
+        updateChart()
+
+    </script>
+    {% endblock %}
+</body>
+</html>
